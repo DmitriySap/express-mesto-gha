@@ -1,11 +1,17 @@
 const User = require('../models/user');
 
+const {
+  NOT_FOUND_ERROR_CODE,
+  DEFAULT_ERROR_CODE,
+  INCORRECT_DATA_ERROR_CODE,
+} = require('../utils/errorStatus');
+
 module.exports.getUsers = async (req, res) => {
   try {
     const user = await User.find({});
     res.send(user);
   } catch (err) {
-    res.status(500).json({
+    res.status(DEFAULT_ERROR_CODE).json({
       message: 'Не удалось получить пользователей',
     });
   }
@@ -16,7 +22,7 @@ module.exports.getUser = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return res.status(404).json({
+      return res.status(NOT_FOUND_ERROR_CODE).json({
         message: 'Пользователь не найден',
       });
     }
@@ -24,12 +30,12 @@ module.exports.getUser = async (req, res) => {
     res.send(user);
   } catch (err) {
     if (err.name === 'CastError') {
-      res.status(400).json({
+      res.status(INCORRECT_DATA_ERROR_CODE).json({
         message: 'Переданы некорректные данные',
       });
       return 0;
     }
-    res.status(500).json({
+    res.status(DEFAULT_ERROR_CODE).json({
       message: 'Не удалось найти пользователя',
     });
   }
@@ -43,12 +49,12 @@ module.exports.createUser = async (req, res) => {
     res.send(user);
   } catch (err) {
     if (err.name === 'ValidationError') {
-      res.status(400).json({
+      res.status(INCORRECT_DATA_ERROR_CODE).json({
         message: 'Переданы некорректные данные',
       });
       return;
     }
-    res.status(500).json({
+    res.status(DEFAULT_ERROR_CODE).json({
       message: 'Не удалось создать пользователя',
     });
   }
@@ -68,12 +74,12 @@ module.exports.updateUser = async (req, res) => {
     res.send(user);
   } catch (e) {
     if (e.name === 'ValidationError') {
-      res.status(400).json({
+      res.status(INCORRECT_DATA_ERROR_CODE).json({
         message: 'Переданы некорректные данные',
       });
       return;
     }
-    res.status(500).json({
+    res.status(DEFAULT_ERROR_CODE).json({
       message: 'Не удалось обновить данные',
     });
   }
@@ -88,12 +94,12 @@ module.exports.updateAvatar = async (req, res) => {
     res.send(user);
   } catch (err) {
     if (err.name === 'ValidationError') {
-      res.status(400).json({
+      res.status(INCORRECT_DATA_ERROR_CODE).json({
         message: 'Переданы некорректные данные',
       });
       return;
     }
-    res.status(500).json({
+    res.status(DEFAULT_ERROR_CODE).json({
       message: 'Не удалось обновить данные',
     });
   }
