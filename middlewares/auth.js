@@ -11,7 +11,7 @@ module.exports = (req, res, next) => {
   const token = authorization.replace('Bearer ', '');
   let payload;
   try {
-    payload = jwt.verify(token, 'Yandex-the-best');
+    payload = jwt.verify(token, 'super-secret');
   } catch (err) {
     return next(new IncorrectTokenError('Необходима авторизация'));
   }
