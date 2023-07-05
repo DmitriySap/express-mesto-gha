@@ -3,7 +3,6 @@ const { Schema } = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
 const TokenIncorrectError = require('../utils/tokenIncorrectError');
-const IncorrectDataError = require('../utils/incorrectDataError');
 
 const userSchema = new Schema({
   name: {
@@ -60,7 +59,7 @@ userSchema.statics.findUserByCredentials = function (email, password) {
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return Promise.reject(new IncorrectDataError('Неправильные почта или пароль.'));
+            return Promise.reject(new TokenIncorrectError('Неправильные почта или пароль.'));
           }
 
           return user;

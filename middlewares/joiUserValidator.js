@@ -20,14 +20,14 @@ module.exports.loginUserValidator = celebrate({
 
 module.exports.updateUserValidator = celebrate({
   body: Joi.object().keys({
-    name: Joi.string().min(2).max(30),
-    about: Joi.string().min(2).max(30),
+    name: Joi.string().required().min(2).max(30),
+    about: Joi.string().required().min(2).max(30),
   }),
 });
 
 module.exports.updateAvatarValidator = celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().pattern(REGEX_URL),
+    avatar: Joi.string().required().pattern(REGEX_URL),
   }),
 });
 

@@ -15,6 +15,7 @@ const app = express();
 app.use(bodyParser.json());
 mongoose.connect('mongodb://localhost:27017/mestodb')
   .then(() => {
+    // eslint-disable-next-line no-console
     console.log('connected to db');
   });
 
@@ -22,12 +23,11 @@ app.post('/signin', loginUserValidator, login);
 app.post('/signup', createUserValidator, createUser);
 app.use(userRoutes);
 app.use(cardRoutes);
-app.use('*', () => {
-  throw new NotFoundError('Ничего не найдено.');
-});
+app.use((req, res, next) => next(new NotFoundError('Ничего не найдено.')));
 
 app.use(errors());
 app.use(handleError);
 app.listen(PORT, () => {
+  // eslint-disable-next-line no-console
   console.log(`Server listening at port ${PORT}`);
 });
