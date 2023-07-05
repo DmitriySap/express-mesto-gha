@@ -1,23 +1,17 @@
+const IncorrectDataError = require('../utils/incorrectDataError');
+const NotFoundError = require('../utils/notFoundError');
 const Card = require('../models/card');
 
-const {
-  NOT_FOUND_ERROR_CODE,
-  DEFAULT_ERROR_CODE,
-  INCORRECT_DATA_ERROR_CODE,
-} = require('../utils/errorStatus');
-
-module.exports.getCards = async (req, res) => {
+module.exports.getCards = async (req, res, next) => {
   try {
     const cards = await Card.find({});
     res.send(cards);
-  } catch (error) {
-    res.status(DEFAULT_ERROR_CODE).json({
-      message: 'Не удалось получить карточки',
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-module.exports.createCard = async (req, res) => {
+module.exports.createCard = async (req, res, next) => {
   try {
     const { name, link } = req.body;
     const owner = req.user._id;
@@ -25,37 +19,35 @@ module.exports.createCard = async (req, res) => {
     res.send(card);
   } catch (err) {
     if (err.name === 'ValidationError') {
-      res.status(INCORRECT_DATA_ERROR_CODE).json({
-        message: 'Переданы некорректные данные',
-      });
-      return;
+      next(new IncorrectDataError('Переданы некорректные данные.'));
+    } else {
+      next(err);
     }
-    res.status(DEFAULT_ERROR_CODE).json({
-      message: 'Не удалось создать карточку',
-    });
   }
 };
 
-module.exports.deleteCard = async (req, res) => {
+module.exports.deleteCard = async (req, res, next) => {
   try {
     const { cardId } = req.params;
-    const response = await Card.findByIdAndDelete(cardId);
-    if (!response) {
-      res
-        .status(NOT_FOUND_ERROR_CODE)
-        .send({ message: 'Карточки с указанным ID не существует.' });
-      return;
+    const card = await Card.findById(cardId);
+    if (!card) {
+      throw new NotFoundError('Карточки с указанным ID не существует.');
     }
-    res.send(response);
+    if (card.owner.toString() !== req.user._id) {
+      throw new IncorrectDataError('Нельзя удалить чужую карточку.');
+    }
+    await Card.findByIdAndRemove(req.params.cardId);
+    res.send({ message: 'Карточка удалена.' });
   } catch (err) {
     if (err.name === 'CastError') {
-      res.status(INCORRECT_DATA_ERROR_CODE).send({ message: 'Карточка не найдена.' });
+      next(new IncorrectDataError('Переданы некорректные данные.'));
+    } else {
+      next(err);
     }
-    res.status(DEFAULT_ERROR_CODE).send({ message: 'Не удалось удалить карточку' });
   }
 };
 
-module.exports.putLike = async (req, res) => {
+module.exports.putLike = async (req, res, next) => {
   try {
     const response = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -63,26 +55,19 @@ module.exports.putLike = async (req, res) => {
       { new: true },
     );
     if (!response) {
-      res.status(NOT_FOUND_ERROR_CODE).send({
-        message: 'Карточка не найдена',
-      });
-      return;
+      throw new NotFoundError('Карточка не найдена.');
     }
     res.send(response);
   } catch (err) {
     if (err.name === 'CastError') {
-      res.status(INCORRECT_DATA_ERROR_CODE).json({
-        message: 'Переданы некорректные данные',
-      });
-      return;
+      next(new IncorrectDataError('Переданы некорректные данные'));
+    } else {
+      next(err);
     }
-    res.status(DEFAULT_ERROR_CODE).json({
-      message: 'Не удалось изменить карточку',
-    });
   }
 };
 
-module.exports.deleteLike = async (req, res) => {
+module.exports.deleteLike = async (req, res, next) => {
   try {
     const response = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -90,21 +75,14 @@ module.exports.deleteLike = async (req, res) => {
       { new: true },
     );
     if (!response) {
-      res.status(NOT_FOUND_ERROR_CODE).send({
-        message: 'Переданы некорректные данные.',
-      });
-      return;
+      throw new NotFoundError('Карточка не найдена.');
     }
     res.send(response);
   } catch (err) {
     if (err.name === 'CastError') {
-      res.status(INCORRECT_DATA_ERROR_CODE).json({
-        message: 'Переданы некорректные данные',
-      });
-      return;
+      next(new IncorrectDataError('Переданы некорректные данные'));
+    } else {
+      next(err);
     }
-    res.status(DEFAULT_ERROR_CODE).json({
-      message: 'Не удалось изменить карточку',
-    });
   }
 };

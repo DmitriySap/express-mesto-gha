@@ -1,66 +1,65 @@
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const NotFoundError = require('../utils/notFoundError');
+const IncorrectDataError = require('../utils/incorrectDataError');
 const User = require('../models/user');
 
-const {
-  NOT_FOUND_ERROR_CODE,
-  DEFAULT_ERROR_CODE,
-  INCORRECT_DATA_ERROR_CODE,
-} = require('../utils/errorStatus');
-
-module.exports.getUsers = async (req, res) => {
+module.exports.getUsers = async (req, res, next) => {
   try {
-    const user = await User.find({});
-    res.send(user);
+    const users = await User.find({});
+    res.send(users);
   } catch (err) {
-    res.status(DEFAULT_ERROR_CODE).json({
-      message: 'Не удалось получить пользователей',
-    });
+    next(err);
   }
 };
 
-module.exports.getUser = async (req, res) => {
+// eslint-disable-next-line consistent-return
+module.exports.getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return res.status(NOT_FOUND_ERROR_CODE).json({
-        message: 'Пользователь не найден',
-      });
+      return next(new NotFoundError('Пользователь не найден.'));
     }
 
     res.send(user);
   } catch (err) {
     if (err.name === 'CastError') {
-      res.status(INCORRECT_DATA_ERROR_CODE).json({
-        message: 'Переданы некорректные данные',
-      });
-      return 0;
+      next(new IncorrectDataError('Переданы некорректные данные.'));
+    } else {
+      next(err);
     }
-    res.status(DEFAULT_ERROR_CODE).json({
-      message: 'Не удалось найти пользователя',
-    });
   }
-  return 0;
 };
 
-module.exports.createUser = async (req, res) => {
+module.exports.getMeUser = (req, res, next) => {
+  User.findOne({ _id: req.user._id })
+    .then((user) => {
+      res.send(user);
+    })
+    .catch((err) => next(err));
+};
+
+module.exports.createUser = async (req, res, next) => {
   try {
-    const { name, about, avatar } = req.body;
-    const user = await User.create({ name, about, avatar });
+    const {
+      name, about, avatar, email, password,
+    } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name, about, avatar, email, password: hash,
+    });
     res.send(user);
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      res.status(INCORRECT_DATA_ERROR_CODE).json({
-        message: 'Переданы некорректные данные',
-      });
-      return;
+    if (err.name === 'CastError') {
+      next(new IncorrectDataError('Переданы некорректные данные'));
+    } else {
+      next(err);
     }
-    res.status(DEFAULT_ERROR_CODE).json({
-      message: 'Не удалось создать пользователя',
-    });
   }
 };
 
-module.exports.updateUser = async (req, res) => {
+module.exports.updateUser = async (req, res, next) => {
   try {
     const { name, about } = req.body;
     const user = await User.findByIdAndUpdate(
@@ -72,20 +71,16 @@ module.exports.updateUser = async (req, res) => {
       },
     );
     res.send(user);
-  } catch (e) {
-    if (e.name === 'ValidationError') {
-      res.status(INCORRECT_DATA_ERROR_CODE).json({
-        message: 'Переданы некорректные данные',
-      });
-      return;
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new IncorrectDataError('Переданы некорректные данные'));
+    } else {
+      next(err);
     }
-    res.status(DEFAULT_ERROR_CODE).json({
-      message: 'Не удалось обновить данные',
-    });
   }
 };
 
-module.exports.updateAvatar = async (req, res) => {
+module.exports.updateAvatar = async (req, res, next) => {
   try {
     const user = await User.findByIdAndUpdate(req.user._id, req.body, {
       new: true,
@@ -94,13 +89,21 @@ module.exports.updateAvatar = async (req, res) => {
     res.send(user);
   } catch (err) {
     if (err.name === 'ValidationError') {
-      res.status(INCORRECT_DATA_ERROR_CODE).json({
-        message: 'Переданы некорректные данные',
-      });
-      return;
+      next(new IncorrectDataError('Переданы некорректные данные'));
+    } else {
+      next(err);
     }
-    res.status(DEFAULT_ERROR_CODE).json({
-      message: 'Не удалось обновить данные',
-    });
   }
+};
+
+module.exports.login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      res.send({
+        token: jwt.sign({ _id: user._id }, 'super-secret', { expiresIn: '7d' }),
+      });
+    })
+    .catch((err) => next(err));
 };

@@ -3,8 +3,9 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const userRoutes = require('./routes/userRouter');
 const cardRoutes = require('./routes/cardRouter');
+const { login, createUser } = require('./controllers/users');
 
-const { NOT_FOUND_ERROR_CODE } = require('./utils/errorStatus');
+const NotFoundError = require('./utils/notFoundError');
 
 const { PORT = 3000 } = process.env;
 
@@ -15,20 +16,12 @@ mongoose.connect('mongodb://localhost:27017/mestodb')
     console.log('connected to db');
   });
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '6495a3dd913286db10cb00c8',
-  };
-
-  next();
-});
-
 app.use(userRoutes);
 app.use(cardRoutes);
-app.use('*', (req, res) => {
-  res.status(NOT_FOUND_ERROR_CODE).send({
-    message: 'Ничего не найдено, проверьте URL и метод запроса.',
-  });
+app.post('/signin', login);
+app.post('/signup', createUser);
+app.use('*', () => {
+  throw new NotFoundError('Ничего не найдено.');
 });
 
 app.listen(PORT, () => {
