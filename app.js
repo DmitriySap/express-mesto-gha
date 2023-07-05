@@ -7,6 +7,7 @@ const cardRoutes = require('./routes/cardRouter');
 const { login, createUser } = require('./controllers/users');
 const handleError = require('./middlewares/error');
 const NotFoundError = require('./utils/notFoundError');
+const { loginUserValidator, createUserValidator } = require('./middlewares/joiUserValidator');
 
 const { PORT = 3000 } = process.env;
 
@@ -17,10 +18,10 @@ mongoose.connect('mongodb://localhost:27017/mestodb')
     console.log('connected to db');
   });
 
+app.post('/signin', loginUserValidator, login);
+app.post('/signup', createUserValidator, createUser);
 app.use(userRoutes);
 app.use(cardRoutes);
-app.post('/signin', login);
-app.post('/signup', createUser);
 app.use('*', () => {
   throw new NotFoundError('Ничего не найдено.');
 });

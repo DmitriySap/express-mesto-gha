@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const NotFoundError = require('../utils/notFoundError');
 const IncorrectDataError = require('../utils/incorrectDataError');
+const NotUniqueEmailError = require('../utils/notUniqueEmailError');
 const User = require('../models/user');
 
 module.exports.getUsers = async (req, res, next) => {
@@ -51,7 +52,9 @@ module.exports.createUser = async (req, res, next) => {
     });
     res.send(user);
   } catch (err) {
-    if (err.name === 'CastError') {
+    if (err.code === 11000) {
+      next(new NotUniqueEmailError('Пользователь с такой почтой уже существует.'));
+    } else if (err.name === 'CastError') {
       next(new IncorrectDataError('Переданы некорректные данные'));
     } else {
       next(err);
