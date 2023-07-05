@@ -47,10 +47,11 @@ module.exports.createUser = async (req, res, next) => {
       name, about, avatar, email, password,
     } = req.body;
     const hash = await bcrypt.hash(password, 10);
+    // eslint-disable-next-line no-unused-vars
     const user = await User.create({
       name, about, avatar, email, password: hash,
     });
-    res.send(user);
+    res.send({message: 'Пользователь создан!'});
   } catch (err) {
     if (err.code === 11000) {
       next(new NotUniqueEmailError('Пользователь с такой почтой уже существует.'));
