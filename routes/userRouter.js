@@ -8,12 +8,12 @@ const {
   getMeUser,
 } = require('../controllers/users');
 
-const { updateUserValidator, updateAvatarValidator } = require('../middlewares/joiUserValidator');
+const { updateUserValidator, updateAvatarValidator, userIdValidator } = require('../middlewares/joiUserValidator');
 
 userRouter.use(auth);
 userRouter.get('/users/me', getMeUser);
 userRouter.get('/users', getUsers);
-userRouter.get('/users/:id', getUser);
+userRouter.get('/users/:id', userIdValidator, getUser);
 userRouter.patch('/users/me', updateUserValidator, updateUser);
 userRouter.patch('/users/me/avatar', updateAvatarValidator, updateAvatar);
 

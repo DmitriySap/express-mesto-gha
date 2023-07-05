@@ -9,11 +9,13 @@ const {
   deleteLike,
 } = require('../controllers/cards');
 
+const { createCardValidator, cardIdValidator } = require('../middlewares/joiCardsValidator');
+
 cardRouter.use(auth);
 cardRouter.get('/cards', getCards);
-cardRouter.post('/cards', createCard);
-cardRouter.delete('/cards/:cardId', deleteCard);
-cardRouter.put('/cards/:cardId/likes', putLike);
-cardRouter.delete('/cards/:cardId/likes', deleteLike);
+cardRouter.post('/cards', createCardValidator, createCard);
+cardRouter.delete('/cards/:cardId', cardIdValidator, deleteCard);
+cardRouter.put('/cards/:cardId/likes', cardIdValidator, putLike);
+cardRouter.delete('/cards/:cardId/likes', cardIdValidator, deleteLike);
 
 module.exports = cardRouter;
