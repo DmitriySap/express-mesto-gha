@@ -51,7 +51,12 @@ module.exports.createUser = async (req, res, next) => {
     const user = await User.create({
       name, about, avatar, email, password: hash,
     });
-    res.send({message: 'Пользователь создан!'});
+    res.send({
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+      email: user.email,
+    });
   } catch (err) {
     if (err.code === 11000) {
       next(new NotUniqueEmailError('Пользователь с такой почтой уже существует.'));
